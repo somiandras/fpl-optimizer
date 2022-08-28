@@ -165,6 +165,7 @@ def optimize(
                     "starter",
                     "expected_points",
                     "is_available",
+                    "in_squad",
                 ]
             ]
             itb_change = np.round(old_squad_value - new_squad["value"].sum(), 1)
