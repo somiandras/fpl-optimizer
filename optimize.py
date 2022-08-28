@@ -157,7 +157,15 @@ def optimize(
             data["sub"] = np.round(bench.value, 0).astype("bool")
             data["filler"] = np.round(filler.value, 0).astype("bool")
             new_squad = data[data["starter"] | data["sub"] | data["filler"]][
-                ["name", "team", "position", "value", "starter", "expected_points"]
+                [
+                    "name",
+                    "team",
+                    "position",
+                    "value",
+                    "starter",
+                    "expected_points",
+                    "is_available",
+                ]
             ]
             itb_change = np.round(old_squad_value - new_squad["value"].sum(), 1)
 
