@@ -192,7 +192,7 @@ def optimize(
                     itb_change=itb_change,
                     transfers=transfer_count.value,
                     transfer_cost=transfer_cost.value,
-                    new_squad=new_squad.drop("expected_points", axis=1),
+                    new_squad=new_squad,
                     value=new_squad["value"].sum(),
                 )
 
