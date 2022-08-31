@@ -1,4 +1,4 @@
-from fpl import get_player_data, get_fixtures
+from preprocess import get_player_data, get_fixtures
 from optimize import optimize
 
 import logging

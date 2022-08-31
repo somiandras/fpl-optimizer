@@ -3,3 +3,8 @@ pandas
 pandera
 cvxpy
 cvxopt
+streamlit
+
+# Dev
+mypy
+black

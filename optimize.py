@@ -108,7 +108,7 @@ def optimize(
 
     clubs = pd.get_dummies(players["team"], drop_first=False)[CLUBS]
     positions = pd.get_dummies(players["position"], drop_first=False)[POSITIONS]
-    data = pd.concat([players, positions, clubs], axis=1).query("is_available")
+    data = pd.concat([players, positions, clubs], axis=1)
 
     optimum = OptimizationResult(new_squad=old_squad, value=old_squad_value)
 
@@ -144,6 +144,8 @@ def optimize(
             starters + bench + filler <= np.full(len(data.index), 1),
             # Filler count
             filler @ np.full(len(data.index), 1) == filler_count,
+            # Starters must be available
+            data["is_available"].values.T @ starters == 11,
         ]
 
         prob = cp.Problem(objective, constraints)
@@ -166,6 +168,8 @@ def optimize(
                     "expected_points",
                     "is_available",
                     "in_squad",
+                    "sub",
+                    "filler",
                 ]
             ]
             itb_change = np.round(old_squad_value - new_squad["value"].sum(), 1)

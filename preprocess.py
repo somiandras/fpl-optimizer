@@ -2,12 +2,14 @@ import json
 
 import requests
 import pandas as pd
+import numpy as np
 
 from schema import Fixture, PlayerFixtures, Summary, MyTeam
 
 STATIC_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
 PLAYER_URL = "https://fantasy.premierleague.com/api/element-summary/{player_id}/"
 FIXTURES_URL = "https://fantasy.premierleague.com/api/fixtures/"
+ME = "https://fantasy.premierleague.com/api/my-team/4001050/"
 
 
 def get_summary():
@@ -29,7 +31,7 @@ def get_fixtures():
     return [Fixture.parse_obj(fixture) for fixture in r.json()]
 
 
-def get_difficulty_multipliers():
+def get_difficulty_multipliers(at_gw: int):
     fixtures = pd.DataFrame.from_records([fixture.dict() for fixture in get_fixtures()])
 
     return (
@@ -43,17 +45,15 @@ def get_difficulty_multipliers():
                 ),
             ]
         )
-        .query("event < 10")
-        .assign(phase=lambda x: (x["event"] < 5).map({True: "pre", False: "post"}))
-        .groupby(["team", "phase"])["difficulty"]
-        .mean()
-        .unstack(1)
-        .pipe(lambda x: x["pre"] / x["post"])
+        .query("@at_gw <= event < @at_gw + 2")
+        .groupby("team")["difficulty"]
+        .sum()
+        .pipe(lambda x: x.div(x.mean()))
         .rename("difficulty_multiplier")
     )
 
 
-def get_player_data(my_team_path: str):
+def get_player_data(my_team_path: str, at_gw: int):
     summary = get_summary()
 
     my_team = pd.DataFrame.from_records(
@@ -81,7 +81,7 @@ def get_player_data(my_team_path: str):
             index="id",
         )
         .rename(columns={"short_name": "team"})
-        .join(get_difficulty_multipliers())
+        .join(get_difficulty_multipliers(at_gw))
     )
 
     players = (
@@ -107,7 +107,8 @@ def get_player_data(my_team_path: str):
         .join(my_team)
         .assign(
             value=lambda x: x["selling_price"].fillna(x["now_cost"]),
-            expected_points=lambda x: x["total_points"] * x["difficulty_multiplier"],
+            expected_points=lambda x: x["total_points"]
+            / np.sqrt(x["difficulty_multiplier"]),
             in_squad=lambda x: x["selling_price"].notnull(),
             is_available=lambda x: x["status"] == "a",
         )
